@@ -55,7 +55,7 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.IMAGE_NAME }}:${{ env.GITHUB_SHA_SHORT }}
             ${{ env.IMAGE_NAME }}:${{ env.REFNAME }}
 
       - name: "Tag latest if release"
