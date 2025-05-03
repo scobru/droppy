@@ -60,10 +60,11 @@ $ droppy start -c /srv/droppy/config -f /srv/droppy/files
 
 To make droppy run in the background, you can use the `--daemon` option, thought it is adviced that you install it as a persistent service in your system. For Linux, see these guides:
 
-- [Systemd-based distributions](https://github.com/silverwind/droppy/wiki/Systemd-Installation)
-- [Debian (Pre-Jessie)](<https://github.com/silverwind/droppy/wiki/Debian-Installation-(Pre-Jessie)>)
-- [Nginx reverse proxy](https://github.com/silverwind/droppy/wiki/Nginx-reverse-proxy)
-- [Apache reverse proxy](https://github.com/silverwind/droppy/wiki/Apache-reverse-proxy)
+- [Systemd](https://github.com/droppyjs/droppy/wiki/Installation-Guide:-systemd)
+- [init.d](https://github.com/droppyjs/droppy/wiki/Installation-Guide:-init.d)
+- [Nginx reverse proxy](https://github.com/droppyjs/droppy/wiki/Installation-Guide:-nginx)
+- [Apache reverse proxy](https://github.com/droppyjs/droppy/wiki/Installation-Guide:-Apache)
+- [Caddy](https://github.com/droppyjs/droppy/wiki/Installation-Guide:-Caddy)
 
 ### Upgrading from legacy droppy
 
@@ -93,7 +94,7 @@ $ npm install -g @droppyjs/cli
 
 ### Docker installation :whale:
 
-We currently publish our images to `ghcr.io/droppyjs/droppy`. You can bind columnes /data and /config should you need.
+We currently publish our images to `ghcr.io/droppyjs/droppy`. You can bind volumes `/data` and `/config` should you need.
 
 ### docker-compose
 
