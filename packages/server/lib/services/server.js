@@ -49,7 +49,7 @@ const setView = (sid, vId, view) => {
   clients[sid].views[vId] = view;
 };
 
-export default async function droppy(opts, isStandalone, dev, callback) {
+export async function droppy(opts, isStandalone, dev, callback) {
   if (isStandalone) {
     log.logo(
       [
@@ -59,7 +59,7 @@ export default async function droppy(opts, isStandalone, dev, callback) {
         blue("node"),
         green(process.version.substring(1)),
       ].join(" "),
-      [blue("config"), "at", green(paths.get().config)].join(" "),
+      [blue("config"), ...(opts !== undefined && opts !== null ? ["provided programmatically"] : ["at", green(paths.get().config)])].join(" "),
       [blue("files"), "at", green(paths.get().files)].join(" ")
     );
   }
@@ -267,10 +267,9 @@ async function startListeners(callback) {
           if (err) {
             log.error(
               "Error creating listener",
-              `${
-                target.opts.proto +
-                (target.opts.socket ? "+unix://" : "://") +
-                log.formatHostPort(target.host, target.port, target.opts.proto)
+              `${target.opts.proto +
+              (target.opts.socket ? "+unix://" : "://") +
+              log.formatHostPort(target.host, target.port, target.opts.proto)
               }: ${err.message}`
             );
             return resolve();
@@ -371,7 +370,7 @@ async function startListeners(callback) {
                     log.formatHostPort(target.host, target.port),
                     red(
                       ". Protocol unsupported. Are you trying to " +
-                        "listen on IPv6 while the protocol is disabled?"
+                      "listen on IPv6 while the protocol is disabled?"
                     )
                   );
                 }

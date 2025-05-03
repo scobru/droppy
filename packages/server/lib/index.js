@@ -1,3 +1,5 @@
+import { droppy } from "./services/server.js";
+
 export { default as paths } from "./services/paths.js";
 export { default as cfg } from "./services/cfg.js";
 
@@ -10,5 +12,11 @@ export { default as filetree } from "./services/filetree.js";
 export { default as log } from "./services/log.js";
 export { default as manifest } from "./services/manifest.js";
 export { default as resources } from "./services/resources.js";
-export { default as server } from "./services/server.js";
 export { default as svg } from "./services/svg.js";
+
+/**
+ * @deprecated Use droppy instead
+ */
+const server = droppy;
+
+export { droppy, server }

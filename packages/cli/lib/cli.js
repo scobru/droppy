@@ -10,7 +10,7 @@ import { fileURLToPath } from "url";
 
 import pkg from "../package.json" with { type: "json" };
 
-import { server, paths, resources, log, cfg, db } from "@droppyjs/server";
+import { droppy, paths, resources, log, cfg, db } from "@droppyjs/server";
 
 import minimist from "minimist";
 
@@ -92,7 +92,7 @@ switch (cmd) {
     break;
 
   case "start":
-    server(null, true, argv.dev, (err) => {
+    droppy(null, true, argv.dev, (err) => {
       if (err) {
         log.error(err);
         process.exit(1);
