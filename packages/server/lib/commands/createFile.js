@@ -1,4 +1,5 @@
 import filetree from "../services/filetree.js";
+import log from "../services/log.js";
 
 export default {
   handler: async ({ validatePaths, sid, config, msg, ws, vId, sendError }) => {
