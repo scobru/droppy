@@ -224,7 +224,7 @@ class DroppyFileTree extends EventEmitter {
       if (err && err.code === "ENOENT") {
         const fd = await fs.open(utils.addFilesPath(dir), "wx");
 
-        await fs.close(fd);
+        await fd.close();
 
         dirs[path.dirname(dir)].files[path.basename(dir)] = {
           size: 0,
