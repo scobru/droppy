@@ -1,12 +1,30 @@
 <div class="file-header">
+  <span class="header-multi-select">
+    <label class="droppy-checkbox">
+      <input type="checkbox" name="select-items" value="{{id}}" />
+      {{{svg "check"}}}
+      <span id="multi-some" class="hidden">-</span>
+    </label>
+  </span>
+  <span class="tip tip-s open-bulk-actions" aria-label="Bulk Actions">
+    {{{svg "menu"}}}
+  </span>
   <span class="header-name {{sort.type}}" data-sort="type">Name {{{svg "triangle"}}}</span>
   <span class="header-mtime {{sort.mtime}}" data-sort="mtime">Modified {{{svg "triangle"}}}</span>
   <span class="header-size {{sort.size}}" data-sort="size">Size {{{svg "triangle"}}}</span>
   <span class="header-line-buttons"></span>
 </div>
+
 {{#each entries}}
 {{#is type "f"}}
 <div class="data-row {{classes}}" data-type="file" data-id="{{id}}" data-name="{{sortname}}">
+  <span class="item-select">
+    <label class="droppy-checkbox">
+      <input type="checkbox" name="selected-item" value="{{id}}" />
+      {{{svg "check"}}}
+    </label>
+  </span>
+
   <span class="sprite sprite-{{sprite}}">
     {{#if playable}}
     <span class="icon-play">{{{svg "play"}}}</span>
@@ -31,6 +49,13 @@
 {{/is}}
 {{#is type "d"}}
 <div class="data-row {{classes}}" data-type="folder" data-id="{{id}}" data-name="{{sortname}}">
+  <span class="item-select">
+    <label class="droppy-checkbox">
+      <input type="checkbox" name="selected-item" value="{{id}}" />
+      {{{svg "check"}}}
+    </label>
+  </span>
+
   <span class="sprite sprite-folder"></span>
   <a class="folder-link entry-link">{{name}}</a>
   <span class="mtime" data-timestamp="{{mtime}}">{{age}}</span>

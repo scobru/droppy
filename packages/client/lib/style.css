@@ -108,6 +108,7 @@ input[type="search"]::-webkit-search-results-decoration {
 }
 
 @media screen and (max-resolution: 1.99dppx) {
+
   nav,
   .path,
   .tip:before {
@@ -120,11 +121,13 @@ input[type="search"]::-webkit-search-results-decoration {
 /* =============================== Animations ============================== */
 
 @keyframes shake {
+
   0%,
   50%,
   100% {
     transform: translateX(-5px)
   }
+
   25%,
   75% {
     transform: translateX(5px)
@@ -135,6 +138,7 @@ input[type="search"]::-webkit-search-results-decoration {
   from {
     transform: rotate(0deg)
   }
+
   to {
     transform: rotate(359deg)
   }
@@ -677,6 +681,7 @@ nav {
   background: #f8f8f8 !important
 }
 
+
 .data-row>*,
 .file-header>*,
 .line-buttons>* {
@@ -685,6 +690,28 @@ nav {
   align-self: stretch;
 }
 
+.data-row .item-select {
+  display: block;
+  width: 1.8rem;
+  text-align: center;
+  align-items: center;
+
+  visibility: hidden;
+
+}
+
+.data-row:hover .item-select {
+  visibility: visible;
+}
+
+.data-row:hover .item-select,
+.data-row:has(.item-select input:checked) .item-select {
+  visibility: visible;
+}
+
+
+/* if item-select is checked, we should always display: flex */
+
 .entry-link {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -692,7 +719,9 @@ nav {
   cursor: pointer;
   display: block;
   /* needed for ellipsis */
-  line-height: 1.3/* fix centering because of display:block */;
+  line-height: 1.3
+    /* fix centering because of display:block */
+  ;
 }
 
 .error-link {
@@ -709,17 +738,21 @@ nav {
 /* Hide certain list elements when width gets too small */
 
 @media (max-width: 639px) {
+
   .header-line-buttons,
   .line-buttons {
     flex: 0 0 4rem
   }
+
   .line-buttons svg {
     padding: 0
   }
+
   .header-size,
   .size {
     flex: 0 0 3.25rem
   }
+
   .header-mtime,
   .mtime {
     display: none
@@ -727,10 +760,12 @@ nav {
 }
 
 @media (max-width: 319px) {
+
   .header-size,
   .size {
     display: none
   }
+
   .line-buttons {
     flex: 0 0 3.5rem
   }
@@ -740,22 +775,26 @@ nav {
 /* Hide them sooner when the view is split */
 
 @media (max-width: 1365px) {
+
   .left .header-line-buttons,
   .right .header-line-buttons,
   .left .line-buttons,
   .right .line-buttons {
     flex: 0 0 3.5rem
   }
+
   .left .line-buttons svg,
   .right .line-buttons svg {
     padding: 0
   }
+
   .left .header-size,
   .right .header-size,
   .left .size,
   .right .size {
     flex: 0 0 3.25rem
   }
+
   .left .header-mtime,
   .right .header-mtime,
   .left .mtime,
@@ -765,12 +804,14 @@ nav {
 }
 
 @media (max-width: 799px) {
+
   .left .header-size,
   .right .header-size,
   .left .size,
   .right .size {
     display: none
   }
+
   .left .line-buttons,
   .right .line-buttons {
     flex: 0 0 3rem
@@ -953,6 +994,7 @@ nav {
 }
 
 @media (max-width: 800px) {
+
   .view.left .button,
   .view.right .button {
     width: 1.5rem
@@ -960,6 +1002,7 @@ nav {
 }
 
 @media (max-width: 530px) {
+
   .view.left .button,
   .view.right .button {
     width: auto;
@@ -1010,7 +1053,7 @@ nav {
 }
 
 .reload:hover {
-  color: rgb( 70, 140, 240)
+  color: rgb(70, 140, 240)
 }
 
 .reload {
@@ -1038,7 +1081,7 @@ nav {
 
 /* ============================ Entry Menu ============================ */
 
-#entry-menu {
+.selection-menu {
   background: #eee;
   border-radius: 4px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .3);
@@ -1051,35 +1094,35 @@ nav {
   z-index: 32;
 }
 
-#entry-menu.in {
+.selection-menu.in {
   opacity: 1;
   visibility: visible
 }
 
-html:not(.mobile) #entry-menu a:hover,
-html:not(.mobile) #entry-menu a.active {
+html:not(.mobile) .selection-menu a:hover,
+html:not(.mobile) .selection-menu a.active {
   background: #05a;
   color: #fff;
 }
 
-#entry-menu a {
+.selection-menu a {
   padding: .25em .35em;
   color: #333;
   display: flex;
   align-items: center;
 }
 
-#entry-menu svg {
+.selection-menu svg {
   margin-right: .25em;
   float: left;
 }
 
-#entry-menu a.play,
-#entry-menu.type-folder a.edit {
+.selection-menu a.play,
+.selection-menu.type-folder a.edit {
   display: none;
 }
 
-#entry-menu.type-audio .play {
+.selection-menu.type-audio .play {
   display: block;
 }
 
@@ -1662,6 +1705,7 @@ video {
 }
 
 @media (max-width: 639px) {
+
   .time-max,
   .time-sep {
     visibility: hidden
@@ -1731,14 +1775,14 @@ video {
 }
 
 #about-fork {
-  display:  block;
+  display: block;
   font-size: .7em;
   color: #333;
   border-radius: .4em;
 }
 
 #about-website {
-  display:  block;
+  display: block;
   font-size: .7em;
   color: #333;
   border-radius: .4em;
@@ -1839,16 +1883,19 @@ video {
   #prefs-box {
     font-size: .8em
   }
+
   .list-prefs li {
     flex-direction: column;
     height: auto;
   }
+
   .list-prefs label {
     width: 100%;
     text-align: center;
     margin-bottom: .25em;
     line-height: 1em;
   }
+
   .list-prefs select {
     width: 100%;
     margin-bottom: .25em;
@@ -1945,7 +1992,7 @@ video {
 }
 
 @media (max-width: 639px),
-  (max-height: 399px) {
+(max-height: 399px) {
   #login-box {
     border-radius: 0;
     box-shadow: none;
@@ -1996,7 +2043,7 @@ video {
 }
 
 @media (max-width: 639px),
-  (max-height: 399px) {
+(max-height: 399px) {
   #login-info-box {
     border-radius: 0
   }
@@ -2085,7 +2132,8 @@ video {
 }
 
 @media (max-width: 639px),
-  (max-height: 399px) {
+(max-height: 399px) {
+
   #remember,
   #submit {
     border-radius: 0;
@@ -2285,9 +2333,11 @@ html:not(.mobile) #drop-select span.active {
     font-size: .8em;
     line-height: 1.75em;
   }
+
   #drop-select .movefile:hover {
     border-radius: 6px 6px 0 0
   }
+
   #drop-select .viewfile:hover {
     border-radius: 0 0 6px 6px
   }
@@ -2353,4 +2403,48 @@ html:not(.mobile) #drop-select span.active {
 
 .pdf-container>canvas {
   padding: 1px;
+}
+
+.droppy-checkbox {
+  width: 0.9rem;
+  height: 0.9rem;
+  display: block;
+  border: 1.5px solid #e2e2e2;
+  border-radius: 0.25em;
+  background: #cbcbd0;
+  text-align: center;
+  font-weight: bold;
+  line-height: 0.7;
+}
+
+.droppy-checkbox:hover {
+  border-color: #808080;
+}
+
+.droppy-checkbox input {
+  display: none;
+}
+
+.droppy-checkbox svg {
+  width: 100%;
+  height: 100%;
+  color: gray;
+  display: inline;
+
+}
+
+.droppy-checkbox input:checked+svg {
+  color: #000;
+}
+
+.header-multi-select {
+  display: inline-flex;
+  width: 1rem;
+  text-align: center;
+  align-items: center;
+}
+
+#bulk-actions-menu {
+  top: 100px;
+  left: 25px;
 }
