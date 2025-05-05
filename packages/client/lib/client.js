@@ -326,8 +326,7 @@ function init() {
 
 function openSocket() {
   droppy.socket = new WebSocket(
-    `${
-      window.location.origin.replace(/^http/, "ws") + window.location.pathname
+    `${window.location.origin.replace(/^http/, "ws") + window.location.pathname
     }!/socket`
   );
 
@@ -938,6 +937,7 @@ function toggleCatcher(show) {
       "#entry-menu",
       "#drop-select",
       ".info-box",
+      ".selection-menu",
     ];
 
   if (show === undefined) {
@@ -1219,6 +1219,9 @@ function openDirectory(view, data, isSearch) {
 
   const html = Handlebars.templates.directory({ entries, sort, isSearch });
   loadContent(view, "directory", null, html).then(() => {
+
+    let selectedItems = [];
+
     // Upload button on empty page
     view
       .find(".empty")
@@ -1271,6 +1274,42 @@ function openDirectory(view, data, isSearch) {
         e.preventDefault();
       });
 
+
+    view
+      .find(".open-bulk-actions")
+      .off("click")
+      .on("click", function () {
+        if (selectedItems.length === 0) {
+          showError(view, "No items are selected.");
+          return;
+        }
+        $("#bulk-actions-menu .item-count").text(selectedItems.length);
+        toggleCatcher(true);
+        $("#bulk-actions-menu").addClass("in");
+      });
+
+    $("#bulk-actions-menu .delete")
+      .off("click")
+      .on("click", function () {
+
+
+        showConfirmation(
+          `Are you sure you want to delete the ${selectedItems.length} items?`,
+          () => {
+            if (droppy.socketWait) {
+              return;
+            }
+
+            toggleCatcher(false);
+            $("#bulk-actions-menu").removeClass("in");
+
+
+            showSpinner(view);
+            sendMessage(view[0].vId, "DELETE_FILE", selectedItems);
+          }
+        );
+      });
+
     view
       .find(".data-row .entry-menu")
       .off("click")
@@ -1320,7 +1359,7 @@ function openDirectory(view, data, isSearch) {
           () => {
             if (droppy.socketWait) return;
             showSpinner(view);
-            sendMessage(view[0].vId, "DELETE_FILE", dataset.id);
+            sendMessage(view[0].vId, "DELETE_FILE", [dataset.id]);
           }
         );
       });
@@ -1338,6 +1377,62 @@ function openDirectory(view, data, isSearch) {
       .on("click", function () {
         sortByHeader(view, $(this));
       });
+
+    view.find(".header-multi-select")
+      .off("click")
+      .on("click", debounce(function () {
+        const selects = view
+          .find("input[name='selected-item']");
+
+        if (selectedItems.length === 0) {
+          selects.each(function (_, el) {
+            // trigger a change on el 
+            el.checked = true;
+            el.dispatchEvent(new Event('change'));
+          });
+        } else {
+          selects.each(function (_, el) {
+            if (el.checked) {
+              el.checked = false;
+              el.dispatchEvent(new Event('change'));
+            }
+          });
+        }
+      }, 200));
+
+    view
+      .find("input[name='selected-item']")
+      .off("change")
+      .on("change", function (e) {
+        if (selectedItems.includes(e.target.value)) {
+          selectedItems = selectedItems.filter(item => item !== e.target.value);
+        } else {
+          selectedItems.push(e.target.value);
+        }
+
+        console.log('selectedItems', selectedItems)
+        console.log('document.querySelectorAll(".item-select").length', document.querySelectorAll(".item-select").length)
+
+
+        if (selectedItems.length === 0) {
+          document.getElementById('multi-some').classList.add('hidden');
+          document.querySelector('.header-multi-select svg').style.display = 'block';
+
+          document.querySelector('.header-multi-select input').checked = false;
+          return;
+        }
+
+        if (selectedItems.length === document.querySelectorAll('.item-select').length) {
+          document.getElementById('multi-some').classList.remove('hidden');
+          document.querySelector('.header-multi-select svg').style.display = 'block';
+          document.querySelector('.header-multi-select input').checked = true;
+        } else {
+          document.getElementById('multi-some').classList.remove('hidden');
+          document.querySelector('.header-multi-select svg').style.display = 'none';
+          document.querySelector('.header-multi-select input').checked = false;
+        }
+
+      })
 
     hideSpinner(view);
   });
@@ -1366,8 +1461,8 @@ function loadContent(view, type, mediaType, content) {
           view[0].animDirection === "forward"
             ? "back"
             : view[0].animDirection === "back"
-            ? "forward"
-            : "center"
+              ? "forward"
+              : "center"
         );
       getOtherViews(view[0].vId).each(function () {
         this.style.zIndex = "1";
@@ -1885,7 +1980,7 @@ function initEntryMenu() {
           const view = entry.parents(".view");
 
           showSpinner(view);
-          sendMessage(view[0].vId, "DELETE_FILE", entry[0].dataset.id);
+          sendMessage(view[0].vId, "DELETE_FILE", [entry[0].dataset.id]);
         }
       );
     });
@@ -1946,7 +2041,7 @@ function showEntryMenu(entry, x, y) {
   const left = x - menu[0].clientWidth / 2;
   const spriteClass = entry.find(".sprite")[0].className;
 
-  menu[0].className = `type-${/sprite-(\w+)/.exec(spriteClass)[1]}`;
+  menu[0].className = `selection-menu type-${/sprite-(\w+)/.exec(spriteClass)[1]}`;
   entry.addClass("active");
   toggleCatcher(true);
   menu[0].style.left = `${left > 0 ? (left > maxLeft ? maxLeft : left) : 0}px`;
@@ -1965,9 +2060,8 @@ function showEntryMenu(entry, x, y) {
 function sortByHeader(view, header) {
   view[0].sortBy = /header-(\w+)/.exec(header[0].className)[1];
   view[0].sortAsc = header.hasClass("down");
-  header[0].className = `header-${view[0].sortBy} ${
-    view[0].sortAsc ? "up" : "down"
-  } active`;
+  header[0].className = `header-${view[0].sortBy} ${view[0].sortAsc ? "up" : "down"
+    } active`;
   header.siblings().removeClass("active up down");
   let entries = sortArrayByProp(
     view[0].templateEntries,
@@ -2785,9 +2879,8 @@ function onNewAudio(view) {
       const cur = player.currentTime,
         max = player.duration;
       if (!cur || !max) return;
-      view[0].querySelector(".seekbar-played").style.width = `${
-        (cur / max) * 100
-      }%`;
+      view[0].querySelector(".seekbar-played").style.width = `${(cur / max) * 100
+        }%`;
       view[0].querySelector(".time-cur").textContent = secsToTime(cur);
       view[0].querySelector(".time-max").textContent = secsToTime(max);
     });
@@ -2934,9 +3027,8 @@ function initAudio(view) {
     else if (player.volume <= 0.33) volumeIcon.html(svg("volume-low"));
     else if (player.volume <= 0.67) volumeIcon.html(svg("volume-medium"));
     else volumeIcon.html(svg("volume-high"));
-    document.querySelector(".volume-slider-inner").style.width = `${
-      volume * 100
-    }%`;
+    document.querySelector(".volume-slider-inner").style.width = `${volume * 100
+      }%`;
   }
 
   function onWheel(event) {

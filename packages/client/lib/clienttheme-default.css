@@ -240,18 +240,18 @@
 
 /* ============================ Entry Menu ============================ */
 
-[theme=default] #entry-menu {
+[theme=default] .selection-menu {
   background: #eee;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .3);
 }
 
-[theme=default] html:not(.mobile) #entry-menu a:hover,
-[theme=default] html:not(.mobile) #entry-menu a.active {
+[theme=default] html:not(.mobile) .selection-menu a:hover,
+[theme=default] html:not(.mobile) .selection-menu a.active {
   background: #05a;
   color: #fff;
 }
 
-[theme=default] #entry-menu a {
+[theme=default] .selection-menu a {
   color: #333;
 }
 

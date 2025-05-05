@@ -57,13 +57,7 @@ jobs:
           tags: |
             ${{ env.IMAGE_NAME }}:${{ env.GITHUB_SHA_SHORT }}
             ${{ env.IMAGE_NAME }}:${{ env.REFNAME }}
-
-      - name: "Tag latest if release"
-        if: "startsWith(github.ref, 'refs/tags/')"
-        run: |
-          docker tag "${{ env.IMAGE_NAME }}:${{ env.GITHUB_SHA_SHORT }}" "${{ env.IMAGE_NAME }}:latest"
-          docker push "${{ env.IMAGE_NAME }}:latest"
-
+            ${{ startsWith(github.ref, 'refs/tags/') && format('{0}:latest', env.IMAGE_NAME) || '' }}
 
       - name: Build Changelog
         id: github_release

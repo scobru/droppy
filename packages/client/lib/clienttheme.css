@@ -63,12 +63,12 @@
 
 /* ============================ Entry Menu ============================ */
 
-[theme=dark] #entry-menu {
+[theme=dark] .selection-menu {
   background: #333;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .3);
 }
 
-[theme=dark] #entry-menu a {
+[theme=dark] .selection-menu a {
   color: #eee;
 }
 
