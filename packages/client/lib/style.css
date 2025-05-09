@@ -696,17 +696,17 @@ nav {
   text-align: center;
   align-items: center;
 
-  visibility: hidden;
+  opacity: 0;
 
 }
 
 .data-row:hover .item-select {
-  visibility: visible;
+  opacity: 1;
 }
 
 .data-row:hover .item-select,
 .data-row:has(.item-select input:checked) .item-select {
-  visibility: visible;
+  opacity: 1;
 }
 
 
