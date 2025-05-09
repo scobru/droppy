@@ -1025,10 +1025,17 @@ function handleUploadRequest(req, res) {
     return;
   }
 
-  if (req.setTimeout) req.setTimeout(config.uploadTimeout);
-  if (req.connection.setTimeout)
+  if (req.setTimeout) {
+    req.setTimeout(config.uploadTimeout);
+  }
+
+  if (req.connection.setTimeout) {
     req.connection.setTimeout(config.uploadTimeout);
-  if (res.setTimeout) res.setTimeout(config.uploadTimeout);
+  }
+
+  if (res.setTimeout) {
+    res.setTimeout(config.uploadTimeout);
+  }
 
   req.query = Object.fromEntries(
     new URLSearchParams(req.url.substring("/!/upload?".length))
@@ -1061,8 +1068,12 @@ function handleUploadRequest(req, res) {
     headers: req.headers,
     fileHwm: 1024 * 1024,
     limits: { fieldNameSize: 255, fieldSize: 10 * 1024 * 1024 },
+    defParamCharset: 'utf8',
   };
-  if (config.maxFileSize > 0) opts.limits.fileSize = config.maxFileSize;
+
+  if (config.maxFileSize > 0) {
+    opts.limits.fileSize = config.maxFileSize;
+  }
 
   const bb = busboy(opts);
   const rootNames = new Set();
