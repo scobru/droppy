@@ -28,7 +28,7 @@ export default {
       await filetree.move(rSrc, rDst);
     } catch (err) {
       log.error(ws, null, err);
-      sendError(sid, vId, `Error renaming ${rSrc} to ${rDst}`);
+      sendError(sid, vId, `Error renaming ${rSrc} to ${rDst}: ${err.message}`);
       return;
     }
 

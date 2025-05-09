@@ -286,6 +286,8 @@ class DroppyFileTree extends EventEmitter {
           log.error(err);
 
           reject(err);
+
+          return;
         }
 
         dirs[path.dirname(dst)].files[path.basename(dst)] =
@@ -311,6 +313,7 @@ class DroppyFileTree extends EventEmitter {
           log.error(err);
 
           reject(err);
+          return;
         }
 
         dirs[dst] = dirs[src];
