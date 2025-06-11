@@ -94,7 +94,7 @@ $ npm install -g @droppyjs/cli
 
 ### Docker installation :whale:
 
-We currently publish our images to `ghcr.io/droppyjs/droppy`. You can bind volumes `/data` and `/config` should you need.
+We currently publish our images to `ghcr.io/droppyjs/droppy`. You can bind volumes `/files` and `/config` should you need.
 
 ### docker-compose
 
