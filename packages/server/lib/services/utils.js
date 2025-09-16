@@ -69,6 +69,16 @@ class DroppyUtils {
   }
 
   move(src, dst, cb) {
+    try {
+      fs.statSync(dst);
+      throw (new Error('Destination already exists'));
+    } catch (e) {
+      console.log('e', e);
+      if (e.code !== 'ENOENT') {
+        throw e;
+      }
+    }
+
     mv(src, dst, (err) => {
       if (cb) cb(err);
     });
