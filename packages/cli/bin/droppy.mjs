@@ -1,12 +1,17 @@
 #!/usr/bin/env node
 
-const { realpathSync, existsSync } = require("fs");
-const path = require("path");
+import { realpathSync, existsSync } from "fs";
+import { join, dirname } from "path";
+
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Check for DROPPY_CACHE_PATH, otherwise add default.
 if (!("DROPPY_CACHE_PATH" in process.env)) {
   const cachePath = realpathSync(
-    path.join(__dirname, "..", "dist", "cache.json")
+    join(__dirname, "..", "dist", "cache.json")
   );
   if (existsSync(cachePath)) {
     process.env.DROPPY_CACHE_PATH = cachePath;
@@ -18,4 +23,4 @@ if (!("DROPPY_CACHE_SKIP_VALIDATIONS" in process.env)) {
   process.env.DROPPY_CACHE_SKIP_VALIDATIONS = true;
 }
 
-require("../lib/cli");
+import("../lib/cli.js");
