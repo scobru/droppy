@@ -38,7 +38,7 @@
         "hosted"
     ],
     "bin": {
-        "droppy": "bin/droppy"
+        "droppy": "bin/droppy.mjs"
     },
     "repository": {
         "type": "git",
