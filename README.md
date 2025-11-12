@@ -195,6 +195,22 @@ For TLS the following additional options are available. Paths can be given relat
 - `cert` _string_ - Path to PEM-encoded TLS certificate file, which can include additional intermediate certificates concatenated after the main certificate. Required.
 - `key` _string_ - Path to PEM-encoded TLS private key file not encrypted with a passphrase. Required.
 
+## REST API
+
+When droppy runs with the server package from this repository it also exposes a minimal JSON API under the `/api/` prefix. All endpoints require either a valid droppy session cookie (`s=<token>`) or HTTP Basic credentials for a privileged user unless `public` mode is enabled.
+
+| Method | Path                 | Description                                                                 |
+|--------|----------------------|-----------------------------------------------------------------------------|
+| GET    | `/api/ping`          | Health check; returns name/version.                                         |
+| GET    | `/api/list?path=/`   | Lists entries in the given directory.                                       |
+| GET    | `/api/read?path=/x`  | Returns file content (`utf8` or `base64` depending on file type).          |
+| POST   | `/api/write`         | Creates or overwrites a file. Body: `{path, content, encoding?}`.          |
+| POST   | `/api/mkdir`         | Creates a directory. Body: `{path}`.                                       |
+| DELETE | `/api/delete?path=/x`| Deletes a file or directory.                                               |
+| POST   | `/api/move`          | Moves/renames files or folders. Body: `{source, destination}`.             |
+
+Responses are JSON. Mutating endpoints honour the `readOnly` configuration and return `403` when the instance is in read-only mode. If the requested resource does not exist a `404` is returned.
+
 ## Downloading from the command line
 
 To download shared links with `curl` and `wget` to the correct filename:
