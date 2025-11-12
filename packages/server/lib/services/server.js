@@ -45,6 +45,8 @@ let firstRun = null;
 let ready = false;
 let dieOnError = true;
 
+const API_PREFIX = "/api/";
+
 const setView = (sid, vId, view) => {
   clients[sid].views[vId] = view;
 };
@@ -150,11 +152,21 @@ export async function droppy(opts, isStandalone, dev, callback) {
   return { onRequest, setupWebSocket };
 }
 
-function onRequest(req, res) {
+async function onRequest(req, res) {
   req.time = Date.now();
 
   for (const [key, value] of Object.entries(config.headers || {})) {
     res.setHeader(key, value);
+  }
+
+  if (isApiRequest(req.url)) {
+    try {
+      await handleApiRequest(req, res);
+    } catch (err) {
+      log.error(err);
+      sendJSON(res, 500, { error: "internal_error" });
+    }
+    return;
   }
 
   if (ready) {
@@ -722,6 +734,529 @@ async function handleGETandHEAD(req, res) {
 }
 
 const rateLimited = [];
+
+const apiRoutes = {
+  ping: handleApiPing,
+  list: handleApiList,
+  read: handleApiRead,
+  write: handleApiWrite,
+  mkdir: handleApiMkdir,
+  delete: handleApiDelete,
+  move: handleApiMove,
+};
+
+function isApiRequest(url) {
+  return typeof url === "string" && url.startsWith(API_PREFIX);
+}
+
+async function handleApiRequest(req, res) {
+  if (!ready) {
+    sendJSON(res, 503, { error: "starting_up" });
+    log.info(req, res);
+    return;
+  }
+
+  const auth = authenticateRequest(req);
+  if (!auth) {
+    sendJSON(res, 401, { error: "unauthorized" }, {
+      "WWW-Authenticate": 'Basic realm="droppy"',
+    });
+    log.info(req, res, "Unauthorized API request");
+    return;
+  }
+
+  let urlObj;
+  try {
+    urlObj = new URL(req.url, "http://localhost");
+  } catch {
+    sendJSON(res, 400, { error: "invalid_url" });
+    log.info(req, res);
+    return;
+  }
+
+  const trimmedPath = urlObj.pathname.replace(/\/+$/, "");
+  const routeName = trimmedPath.startsWith(API_PREFIX)
+    ? trimmedPath.slice(API_PREFIX.length)
+    : "";
+  const [routeKey = ""] = routeName.split("/").filter(Boolean);
+
+  if (!routeKey) {
+    sendJSON(res, 200, {
+      name: pkg.name,
+      version: pkg.version,
+      ok: true,
+    });
+    log.info(req, res);
+    return;
+  }
+
+  const handler = apiRoutes[routeKey];
+  if (!handler) {
+    sendJSON(res, 404, { error: "not_found" });
+    log.info(req, res);
+    return;
+  }
+
+  await handler({
+    req,
+    res,
+    url: urlObj,
+    searchParams: urlObj.searchParams,
+    auth,
+    route: routeKey,
+  });
+
+  if (!res.writableEnded) {
+    sendJSON(res, 200, { ok: true });
+  }
+  log.info(req, res);
+}
+
+function authenticateRequest(req) {
+  if (config && config.public) {
+    return { username: null, privileged: true, source: "public" };
+  }
+
+  const sessionAuth = getSessionAuth(req);
+  if (sessionAuth) {
+    return { ...sessionAuth, source: "session" };
+  }
+
+  const basicAuth = parseBasicAuth(req);
+  if (basicAuth) {
+    return { ...basicAuth, source: "basic" };
+  }
+
+  return null;
+}
+
+function getSessionAuth(req) {
+  if (!req.headers?.cookie) return null;
+  const sid = cookies.get(req.headers.cookie);
+  if (!sid) return null;
+  const session = db.get("sessions")[sid];
+  if (!session) return null;
+  session.lastSeen = Date.now();
+  return {
+    sid,
+    username: session.username || null,
+    privileged: Boolean(session.privileged),
+  };
+}
+
+function parseBasicAuth(req) {
+  const header =
+    req.headers?.authorization || req.headers?.Authorization;
+  if (!header || typeof header !== "string") return null;
+  const trimmed = header.trim();
+  if (!trimmed.toLowerCase().startsWith("basic ")) return null;
+  const token = trimmed.slice(6);
+  let decoded = "";
+  try {
+    decoded = Buffer.from(token, "base64").toString("utf8");
+  } catch {
+    return null;
+  }
+
+  const separatorIndex = decoded.indexOf(":");
+  if (separatorIndex === -1) return null;
+  const username = decoded.slice(0, separatorIndex);
+  const password = decoded.slice(separatorIndex + 1);
+  if (!username || !password) return null;
+
+  if (!db.authUser(username, password)) {
+    return null;
+  }
+
+  const userEntry = db.get("users")[username] || {};
+  return {
+    username,
+    privileged: Boolean(userEntry.privileged),
+  };
+}
+
+function normalizeApiPath(raw, { allowRoot = true } = {}) {
+  if (raw === undefined || raw === null) {
+    return allowRoot ? "/" : null;
+  }
+
+  const trimmed = String(raw).trim();
+  if (!trimmed) {
+    return allowRoot ? "/" : null;
+  }
+
+  let normalized = utils.normalizePath(trimmed);
+  if (!normalized.startsWith("/")) {
+    normalized = `/${normalized}`;
+  }
+  normalized = normalized.replace(/\/{2,}/g, "/");
+
+  if (!utils.isPathSane(normalized)) {
+    return null;
+  }
+
+  if (!allowRoot && normalized === "/") {
+    return null;
+  }
+
+  return normalized;
+}
+
+function ensureWritable(res) {
+  if (config.readOnly) {
+    sendJSON(res, 403, { error: "read_only_mode" });
+    return false;
+  }
+  return true;
+}
+
+function formatListing(entries) {
+  if (!entries) {
+    return [];
+  }
+
+  return Object.entries(entries).map(([name, meta]) => {
+    const [type, mtime, size] = String(meta).split("|");
+    return {
+      name,
+      type: type === "d" ? "directory" : "file",
+      mtime: Number(mtime),
+      size: Number(size),
+    };
+  });
+}
+
+function sendJSON(res, status, payload, extraHeaders = {}) {
+  if (res.writableEnded) return;
+  const headers = {
+    "Cache-Control": "no-store",
+    ...extraHeaders,
+  };
+  let body = "";
+
+  if (payload !== undefined) {
+    headers["Content-Type"] = "application/json; charset=utf-8";
+    body = JSON.stringify(payload);
+  }
+
+  res.writeHead(status, headers);
+  res.end(body);
+}
+
+async function handleApiPing({ req, res }) {
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    sendJSON(res, 405, { error: "method_not_allowed" }, {
+      Allow: "GET, HEAD",
+    });
+    return;
+  }
+
+  sendJSON(res, 200, {
+    ok: true,
+    name: pkg.name,
+    version: pkg.version,
+  });
+}
+
+async function handleApiList({ req, res, searchParams }) {
+  if (res.writableEnded) return;
+  if (req.method !== "GET") {
+    sendJSON(res, 405, { error: "method_not_allowed" }, {
+      Allow: "GET",
+    });
+    return;
+  }
+
+  const targetPath = normalizeApiPath(searchParams.get("path"));
+  if (targetPath === null) {
+    sendJSON(res, 400, { error: "invalid_path" });
+    return;
+  }
+
+  const listing = filetree.ls(targetPath);
+  if (!listing) {
+    sendJSON(res, 404, { error: "not_found" });
+    return;
+  }
+
+  sendJSON(res, 200, {
+    path: targetPath,
+    entries: formatListing(listing),
+  });
+}
+
+async function handleApiRead({ req, res, searchParams }) {
+  if (res.writableEnded) return;
+  if (req.method !== "GET") {
+    sendJSON(res, 405, { error: "method_not_allowed" }, {
+      Allow: "GET",
+    });
+    return;
+  }
+
+  const targetPath = normalizeApiPath(searchParams.get("path"), {
+    allowRoot: false,
+  });
+  if (!targetPath) {
+    sendJSON(res, 400, { error: "invalid_path" });
+    return;
+  }
+
+  const absPath = utils.addFilesPath(targetPath);
+  let stats;
+  try {
+    stats = await fs.stat(absPath);
+  } catch (err) {
+    if (err?.code === "ENOENT") {
+      sendJSON(res, 404, { error: "not_found" });
+    } else {
+      log.error(err);
+      sendJSON(res, 500, { error: "stat_failed" });
+    }
+    return;
+  }
+
+  if (stats.isDirectory()) {
+    sendJSON(res, 400, { error: "is_directory" });
+    return;
+  }
+
+  let data;
+  try {
+    data = await fs.readFile(absPath);
+  } catch (err) {
+    log.error(err);
+    sendJSON(res, 500, { error: "read_failed" });
+    return;
+  }
+
+  let encoding = "utf8";
+  let content;
+
+  try {
+    const binary = await utils.isBinary(absPath);
+    if (binary) {
+      encoding = "base64";
+      content = data.toString("base64");
+    } else {
+      encoding = "utf8";
+      content = data.toString("utf8");
+    }
+  } catch (err) {
+    log.error(err);
+    sendJSON(res, 500, { error: "detect_failed" });
+    return;
+  }
+
+  sendJSON(res, 200, {
+    path: targetPath,
+    encoding,
+    content,
+    size: stats.size,
+    mtime: stats.mtime.getTime(),
+  });
+}
+
+async function handleApiWrite({ req, res }) {
+  if (res.writableEnded) return;
+  if (req.method !== "POST") {
+    sendJSON(res, 405, { error: "method_not_allowed" }, {
+      Allow: "POST",
+    });
+    return;
+  }
+
+  if (!ensureWritable(res)) {
+    return;
+  }
+
+  let body;
+  try {
+    body = await utils.readJsonBody(req);
+  } catch {
+    sendJSON(res, 400, { error: "invalid_json" });
+    return;
+  }
+
+  const targetPath = normalizeApiPath(body?.path, { allowRoot: false });
+  if (!targetPath) {
+    sendJSON(res, 400, { error: "invalid_path" });
+    return;
+  }
+
+  const parentDir = path.posix.dirname(targetPath);
+  if (parentDir && parentDir !== "/") {
+    try {
+      await utils.mkdir(utils.addFilesPath(parentDir));
+    } catch (err) {
+      log.error(err);
+      sendJSON(res, 500, { error: "mkdir_failed" });
+      return;
+    }
+  }
+
+  let buffer;
+  const encoding = body?.encoding === "base64" ? "base64" : "utf8";
+  try {
+    buffer = Buffer.from(body?.content || "", encoding);
+  } catch {
+    sendJSON(res, 400, { error: "invalid_content" });
+    return;
+  }
+
+  try {
+    await filetree.save(targetPath, buffer);
+  } catch (err) {
+    log.error(err);
+    sendJSON(res, 500, { error: "write_failed" });
+    return;
+  }
+
+  sendJSON(res, 200, {
+    path: targetPath,
+    size: buffer.length,
+  });
+}
+
+async function handleApiMkdir({ req, res }) {
+  if (res.writableEnded) return;
+  if (req.method !== "POST") {
+    sendJSON(res, 405, { error: "method_not_allowed" }, {
+      Allow: "POST",
+    });
+    return;
+  }
+
+  if (!ensureWritable(res)) {
+    return;
+  }
+
+  let body;
+  try {
+    body = await utils.readJsonBody(req);
+  } catch {
+    sendJSON(res, 400, { error: "invalid_json" });
+    return;
+  }
+
+  const targetPath = normalizeApiPath(body?.path, { allowRoot: false });
+  if (!targetPath) {
+    sendJSON(res, 400, { error: "invalid_path" });
+    return;
+  }
+
+  try {
+    await filetree.mkdir(targetPath);
+  } catch (err) {
+    if (err?.code === "EEXIST") {
+      sendJSON(res, 409, { error: "already_exists" });
+    } else {
+      log.error(err);
+      sendJSON(res, 500, { error: "mkdir_failed" });
+    }
+    return;
+  }
+
+  sendJSON(res, 201, { path: targetPath });
+}
+
+async function handleApiDelete({ req, res, searchParams }) {
+  if (res.writableEnded) return;
+  if (req.method !== "DELETE") {
+    sendJSON(res, 405, { error: "method_not_allowed" }, {
+      Allow: "DELETE",
+    });
+    return;
+  }
+
+  if (!ensureWritable(res)) {
+    return;
+  }
+
+  const targetPath = normalizeApiPath(searchParams.get("path"), {
+    allowRoot: false,
+  });
+  if (!targetPath) {
+    sendJSON(res, 400, { error: "invalid_path" });
+    return;
+  }
+
+  try {
+    await filetree.del(targetPath);
+  } catch (err) {
+    if (err?.code === "ENOENT") {
+      sendJSON(res, 404, { error: "not_found" });
+    } else {
+      log.error(err);
+      sendJSON(res, 500, { error: "delete_failed" });
+    }
+    return;
+  }
+
+  sendJSON(res, 204);
+}
+
+async function handleApiMove({ req, res }) {
+  if (res.writableEnded) return;
+  if (req.method !== "POST") {
+    sendJSON(res, 405, { error: "method_not_allowed" }, {
+      Allow: "POST",
+    });
+    return;
+  }
+
+  if (!ensureWritable(res)) {
+    return;
+  }
+
+  let body;
+  try {
+    body = await utils.readJsonBody(req);
+  } catch {
+    sendJSON(res, 400, { error: "invalid_json" });
+    return;
+  }
+
+  const sourcePath = normalizeApiPath(body?.source, { allowRoot: false });
+  const destinationPath = normalizeApiPath(body?.destination, {
+    allowRoot: false,
+  });
+
+  if (!sourcePath || !destinationPath) {
+    sendJSON(res, 400, { error: "invalid_path" });
+    return;
+  }
+
+  const destinationParent = path.posix.dirname(destinationPath);
+  if (destinationParent && destinationParent !== "/") {
+    try {
+      await utils.mkdir(utils.addFilesPath(destinationParent));
+    } catch (err) {
+      log.error(err);
+      sendJSON(res, 500, { error: "mkdir_failed" });
+      return;
+    }
+  }
+
+  try {
+    await filetree.move(sourcePath, destinationPath);
+  } catch (err) {
+    if (err?.code === "ENOENT") {
+      sendJSON(res, 404, { error: "not_found" });
+    } else if (err?.code === "EEXIST") {
+      sendJSON(res, 409, { error: "destination_exists" });
+    } else {
+      log.error(err);
+      sendJSON(res, 500, { error: "move_failed" });
+    }
+    return;
+  }
+
+  sendJSON(res, 200, {
+    from: sourcePath,
+    to: destinationPath,
+  });
+}
 
 function handlePOST(req, res) {
   const URI = decodeURIComponent(req.url);
