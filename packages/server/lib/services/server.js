@@ -746,7 +746,20 @@ const apiRoutes = {
 };
 
 function isApiRequest(url) {
-  return typeof url === "string" && url.startsWith(API_PREFIX);
+  if (typeof url !== "string") {
+    return false;
+  }
+
+  if (url.startsWith(API_PREFIX)) {
+    return true;
+  }
+
+  try {
+    const parsed = new URL(url, "http://localhost");
+    return parsed.pathname.startsWith(API_PREFIX);
+  } catch {
+    return false;
+  }
 }
 
 async function handleApiRequest(req, res) {
