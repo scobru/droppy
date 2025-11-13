@@ -193,11 +193,6 @@ class DroppyFileTree extends EventEmitter {
 
     this.lookAway();
 
-    /**
-     * @type {Function}
-     */
-    let callable;
-
     if (stats.isFile()) {
       if (type === "cut") {
         await this.mv(src, dst);
@@ -210,9 +205,9 @@ class DroppyFileTree extends EventEmitter {
       } else {
         await this.cpdir(src, dst);
       }
+    } else {
+      throw new Error("Unsupported file type for clipboard operation");
     }
-
-    return callable(src, dst);
   }
 
   async mk(dir) {
