@@ -11,7 +11,7 @@
         "node": ">= 14.14.0"
     },
     "scripts": {
-        "build": "DROPPY_CACHE_PATH=$PWD/packages/cli/dist/cache.json lerna run --stream build --",
+        "build": "cross-env DROPPY_CACHE_PATH=./packages/cli/dist/cache.json lerna run --stream build --",
         "start": "lerna run --stream start --",
         "bootstrap": "lerna bootstrap",
         "lint": "eslint packages",
@@ -70,6 +70,7 @@
         "husky": "^7.0.2",
         "jest": "^29.7.0",
         "lerna": "^6.6.2",
+        "cross-env": "^7.0.3",
         "lint-staged": "^11.1.2",
         "nx": "^16.2.2",
         "postcss": "8.3.6",

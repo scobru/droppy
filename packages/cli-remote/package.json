@@ -1,30 +1,12 @@
 {
-    "name": "@droppyjs/cli",
+    "name": "@droppyjs/cli-remote",
     "version": "1.3.1",
-    "description": "> Command Line Interface for droppy.",
+    "description": "Remote command interface for droppy CLI",
     "author": "droppyjs <hello@droppyjs.com>",
     "homepage": "https://github.com/droppyjs/droppy#readme",
     "license": "BSD-2-Clause",
-    "main": "lib/cli.js",
+    "main": "lib/remote.js",
     "type": "module",
-    "dependencies": {
-        "@droppyjs/server": "1.3.1",
-        "cheerio": "^1.1.2",
-        "daemonize-process": "^3.0.0",
-        "minimist": "^1.2.5",
-        "ps-node": "^0.1.6",
-        "untildify": "^4.0.0",
-        "which": "^2.0.2"
-    },
-    "directories": {
-        "lib": "lib",
-        "test": "__tests__",
-        "dist": "dist"
-    },
-    "files": [
-        "lib",
-        "dist"
-    ],
     "keywords": [
         "self-hosted",
         "personal",
@@ -39,16 +21,19 @@
         "hosted"
     ],
     "bin": {
-        "droppy": "bin/droppy.mjs"
+        "droppy-remote": "bin/droppy-remote.mjs"
     },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/droppyjs/droppy.git"
     },
-    "scripts": {
-        "start": "node ./lib/cli.js start",
-        "build": "node ./lib/cli.js build"
+    "dependencies": {
+        "minimist": "^1.2.5"
     },
+    "files": [
+        "lib",
+        "bin"
+    ],
     "bugs": {
         "url": "https://github.com/droppyjs/droppy/issues"
     },
@@ -56,3 +41,4 @@
         "access": "public"
     }
 }
+

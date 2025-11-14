@@ -211,6 +211,47 @@ When droppy runs with the server package from this repository it also exposes a 
 
 Responses are JSON. Mutating endpoints honour the `readOnly` configuration and return `403` when the instance is in read-only mode. If the requested resource does not exist a `404` is returned.
 
+## Remote CLI Commands
+
+The `@droppyjs/cli-remote` package provides command-line access to remote droppy instances via the REST API.
+
+### Installation
+
+```sh
+$ yarn global add @droppyjs/cli-remote
+# or, for NPM users:
+$ npm install -g @droppyjs/cli-remote
+```
+
+### Usage
+
+```sh
+$ droppy-remote ping <url>                    # Check if remote instance is reachable
+$ droppy-remote list <url> <path>             # List directory contents
+$ droppy-remote read <url> <path>             # Read file content
+$ droppy-remote write <url> <path>            # Write file (requires --content or --file)
+$ droppy-remote mkdir <url> <path>            # Create directory
+$ droppy-remote delete <url> <path>           # Delete file/directory
+$ droppy-remote move <url> <source> <dest>    # Move/rename file
+```
+
+### Options
+
+- `--user <username>` - Username for authentication
+- `--pass <password>` - Password for authentication
+- `--content <text>` - Content to write (for write command)
+- `--file <path>` - File path to read content from (for write command)
+
+### Examples
+
+```sh
+$ droppy-remote ping http://localhost:8989
+$ droppy-remote list http://localhost:8989 / --user admin --pass secret
+$ droppy-remote read http://localhost:8989 /file.txt --user admin --pass secret
+$ droppy-remote write http://localhost:8989 /new.txt --content "Hello" --user admin --pass secret
+$ droppy-remote write http://localhost:8989 /file.txt --file ./local.txt --user admin --pass secret
+```
+
 ## Downloading from the command line
 
 To download shared links with `curl` and `wget` to the correct filename:
