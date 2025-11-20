@@ -38,9 +38,15 @@ RUN git clone --depth=1  https://github.com/scobru/droppy /droppy
 
 RUN rm -rf /droppy/node_modules && \
     cd /droppy && \
+    sed -i 's/"node": "20.17.0"/"node": "20.18.1"/g' package.json && \
     source ~/.bashrc && \
-    volta install node@20.18.1 && \
+    export PATH="$VOLTA_HOME/bin:$PATH" && \
+    volta install node@20.18.1 yarn@1.22.10 && \
+    volta pin node@20.18.1 && \
+    volta list && \
+    which node && \
     node --version && \
+    yarn --version && \
     yarn
 
 
