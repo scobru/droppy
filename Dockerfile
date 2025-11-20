@@ -38,6 +38,7 @@ RUN git clone --depth=1  https://github.com/scobru/droppy /droppy
 
 RUN rm -rf /droppy/node_modules && \
     cd /droppy && \
+    volta install node && \
     yarn
 
 
